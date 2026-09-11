@@ -9,7 +9,806 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
     </style>
+</head><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOWX - Archery Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
 </head>
+<body class="w-screen h-screen flex flex-col justify-between select-none overflow-hidden bg-slate-950 text-white m-0 p-0 relative">
+
+    <div id="mainMenu" class="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center transition-all duration-300 p-4">
+        
+        <!-- Top Full Screen Prompt Card -->
+        <div id="fullscreenPrompt" class="absolute top-12 left-1/2 -translate-x-1/2 bg-slate-900 border border-indigo-500/40 rounded-2xl p-3 shadow-2xl shadow-indigo-950/50 flex items-center space-x-3 max-w-xs w-full z-30 transition-all duration-300">
+            <div class="w-10 h-10 bg-indigo-600/20 text-indigo-400 rounded-xl flex items-center justify-center text-xl font-bold border border-indigo-500/30 shrink-0">⛶</div>
+            <div class="flex-1">
+                <h4 class="text-white font-bold text-xs tracking-wide">Full Screen Mode?</h4>
+                <p class="text-slate-400 text-[10px]">Experience the mission in full glory.</p>
+            </div>
+            <div class="flex flex-col space-y-1">
+                <button id="noThanksBtn" class="text-[9px] text-slate-400 hover:text-white font-semibold uppercase tracking-wider transition">No Thanks</button>
+                <button id="enableFsBtn" class="px-2.5 py-1 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-extrabold text-[11px] rounded-lg transition shadow-md shadow-indigo-600/30">Enable</button>
+            </div>
+        </div>
+
+        <!-- Center Game Menu Card -->
+        <div class="bg-slate-900/95 border border-slate-800 p-6 sm:p-8 rounded-3xl max-w-xs w-full text-center shadow-2xl relative">
+            <div class="w-14 h-14 bg-indigo-600/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner border border-indigo-500/30">🏹</div>
+            <h1 class="text-2xl sm:text-3xl font-black bg-gradient-to-r from-indigo-400 via-blue-400 to-indigo-500 bg-clip-text text-transparent mb-4 tracking-wider uppercase">bowx</h1>
+            
+            <div class="space-y-2.5 w-full">
+                <button id="startBtn" class="w-full py-2.5 bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-sm rounded-xl shadow-md shadow-indigo-600/25 border border-indigo-400/30 transition-all duration-200 active:scale-95 cursor-pointer flex items-center justify-center space-x-2">
+                    <span>Start Game</span>
+                    <span class="text-xs">🚀</span>
+                </button>
+                <button id="exitBtn" class="w-full py-2.5 bg-red-500/80 hover:bg-red-500 text-white font-bold text-xs rounded-xl shadow-sm transition-all duration-200 active:scale-95 cursor-pointer uppercase tracking-wider">
+                    Exit
+                </button>
+            </div>
+        </div>
+
+        <!-- Copyright Footer -->
+        <div class="absolute bottom-4 left-5 pointer-events-none z-20">
+            <p class="text-xs font-semibold text-slate-400 tracking-wider">© MOBIX </p>
+        </div>
+    </div>
+
+    <main class="relative flex-1 w-full flex items-center justify-center bg-slate-950 overflow-hidden">
+        
+        <!-- Floating HUD Overlays -->
+        <div class="absolute top-4 left-4 right-4 flex justify-between items-center pointer-events-none z-20">
+            <div class="flex space-x-3 pointer-events-auto">
+                <div class="bg-slate-900/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-800 shadow-lg flex items-center space-x-3">
+                    <span class="text-xs text-slate-400 uppercase font-semibold">Score</span>
+                    <span id="scoreVal" class="text-xl font-bold text-amber-400">0</span>
+                </div>
+                <div class="bg-slate-900/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-800 shadow-lg flex items-center space-x-3">
+                    <span class="text-xs text-slate-400 uppercase font-semibold">Arrows</span>
+                    <span id="arrowsVal" class="text-xl font-bold text-indigo-400">0</span>
+                </div>
+            </div>
+            <div class="pointer-events-auto">
+                <button id="resetBtn" class="bg-slate-900/80 hover:bg-slate-800 text-white text-xl px-4 py-2 rounded-2xl border border-slate-800 transition cursor-pointer flex items-center justify-center shadow-lg w-12 h-12" title="Restart">
+                    <span>⟳</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="canvasContainer" class="absolute inset-0 w-full h-full">
+            <canvas id="gameCanvas" class="block w-full h-full cursor-crosshair"></canvas>
+        </div>
+
+        <!-- Copyright Footer -->
+        <div class="absolute bottom-3 left-4 pointer-events-none z-20">
+            <p class="text-xs font-semibold text-slate-500 tracking-wider">© MOBIX </p>
+        </div>
+
+        <!-- Wave / Game Over Modal Overlay -->
+        <div id="modalOverlay" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md hidden flex items-center justify-center transition-all duration-300">
+            <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl max-w-sm w-full text-center shadow-2xl relative overflow-hidden">
+                <div id="modalIcon" class="w-20 h-20 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mx-auto mb-5 text-4xl shadow-inner border border-amber-500/30">🎯</div>
+                <h2 id="modalTitle" class="text-3xl font-black text-white mb-2 tracking-wide">Wave Cleared!</h2>
+                <p id="modalDesc" class="text-slate-300 mb-8 text-sm leading-relaxed">You eliminated all target crates with skill!</p>
+                <button id="modalBtn" class="w-full py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-base rounded-xl shadow-xl shadow-amber-500/20 transition-all duration-200 active:scale-95 cursor-pointer uppercase tracking-wider">
+                    Next Wave
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('gameCanvas');
+            const container = document.getElementById('canvasContainer');
+            const ctx = canvas.getContext('2d');
+
+            const scoreVal = document.getElementById('scoreVal');
+            const arrowsVal = document.getElementById('arrowsVal');
+            const modalOverlay = document.getElementById('modalOverlay');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalDesc = document.getElementById('modalDesc');
+            const modalBtn = document.getElementById('modalBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const modalIcon = document.getElementById('modalIcon');
+            const mainMenu = document.getElementById('mainMenu');
+            const startBtn = document.getElementById('startBtn');
+            const exitBtn = document.getElementById('exitBtn');
+            const fullscreenPrompt = document.getElementById('fullscreenPrompt');
+            const enableFsBtn = document.getElementById('enableFsBtn');
+            const noThanksBtn = document.getElementById('noThanksBtn');
+
+            let score = 0;
+            let currentLevel = 1;
+            let gameStarted = false;
+            let gameActive = false;
+
+            let bowPos = { x: 120, y: 300 };
+            let isAiming = false;
+            let aimCurrent = { x: 120, y: 300 };
+
+            let targets = [];
+            let activeArrow = null;
+            let flyingArrows = [];
+            let particles = [];
+            let remainingArrows = 0;
+
+            let treatPopup = {
+                active: false,
+                startX: 0,
+                currentY: 0,
+                targetY: 0,
+                alpha: 0,
+                life: 0
+            };
+
+            function resizeCanvas() {
+                canvas.width = container.clientWidth || window.innerWidth;
+                canvas.height = container.clientHeight || window.innerHeight;
+                
+                bowPos = { x: Math.max(100, canvas.width * 0.12), y: canvas.height / 2 };
+                
+                if (!isAiming && (!activeArrow || !activeArrow.isFlying)) {
+                    resetArrow();
+                }
+                if (targets.length === 0 && gameActive) {
+                    spawnTargets();
+                }
+            }
+
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            enableFsBtn.addEventListener('click', () => {
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                }
+                fullscreenPrompt.style.opacity = '0';
+                setTimeout(() => { fullscreenPrompt.style.display = 'none'; }, 300);
+            });
+
+            noThanksBtn.addEventListener('click', () => {
+                fullscreenPrompt.style.opacity = '0';
+                setTimeout(() => { fullscreenPrompt.style.display = 'none'; }, 300);
+            });
+
+            startBtn.addEventListener('click', () => {
+                mainMenu.classList.add('opacity-0', 'scale-105', 'pointer-events-none');
+                setTimeout(() => {
+                    mainMenu.style.display = 'none';
+                }, 400);
+                gameStarted = true;
+                gameActive = true;
+                spawnTargets();
+                resetArrow();
+            });
+
+            exitBtn.addEventListener('click', () => {
+                if (window.opener) {
+                    window.close();
+                } else {
+                    modalOverlay.classList.remove('hidden');
+                    modalIcon.textContent = '👋';
+                    modalTitle.textContent = 'Session Ended';
+                    modalDesc.textContent = 'Game session ended. You can close this tab.';
+                    modalBtn.textContent = 'Okay';
+                }
+            });
+
+            function spawnTargets() {
+                targets = [];
+                
+                const cols = 2 + Math.min(3, Math.floor((currentLevel - 1) / 2));
+                const rows = 3 + Math.min(4, currentLevel);
+                
+                const targetSize = Math.max(30, 48 - (currentLevel * 1.5));
+                const gap = 6;
+                
+                const totalGridWidth = (cols * targetSize) + ((cols - 1) * gap);
+                const minRightX = Math.max(canvas.width * 0.62, bowPos.x + 450);
+                const startX = Math.min(minRightX, canvas.width - totalGridWidth - 80);
+                
+                const totalHeight = (rows * targetSize) + ((rows - 1) * gap);
+                const startY = Math.max(80, (canvas.height / 2) - (totalHeight / 2));
+
+                const centerRow = Math.floor(rows / 2);
+                const centerCol = Math.floor(cols / 2);
+
+                const hasTNT = currentLevel >= 3;
+
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const isCore = hasTNT && (r === centerRow && c === centerCol);
+                        
+                        targets.push({
+                            x: startX + c * (targetSize + gap),
+                            y: startY + r * (targetSize + gap),
+                            baseY: startY + r * (targetSize + gap),
+                            w: targetSize,
+                            h: targetSize,
+                            type: isCore ? 'tnt' : 'crate',
+                            vx: 0,
+                            vy: 0,
+                            isFalling: false,
+                            alpha: 1,
+                            swayOffset: Math.random() * Math.PI * 2
+                        });
+                    }
+                }
+
+                remainingArrows = targets.length;
+                arrowsVal.textContent = remainingArrows;
+            }
+
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            function playSound(type) {
+                if (!audioCtx) return;
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'hit') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(320, now);
+                    osc.frequency.exponentialRampToValueAtTime(80, now + 0.12);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } else if (type === 'tnt') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(140, now);
+                    osc.frequency.exponentialRampToValueAtTime(30, now + 0.35);
+                    gain.gain.setValueAtTime(0.5, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'win') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.setValueAtTime(554.37, now + 0.1);
+                    osc.frequency.setValueAtTime(659.25, now + 0.2);
+                    osc.frequency.setValueAtTime(880, now + 0.3);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                } else if (type === 'lose') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.linearRampToValueAtTime(110, now + 0.4);
+                    gain.gain.setValueAtTime(0.35, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                }
+            }
+
+            function resetArrow() {
+                activeArrow = {
+                    x: bowPos.x,
+                    y: bowPos.y,
+                    angle: 0,
+                    isFlying: false
+                };
+            }
+
+            resetArrow();
+
+            function getPointerPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+                const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+                return {
+                    x: clientX - rect.left,
+                    y: clientY - rect.top
+                };
+            }
+
+            canvas.addEventListener('pointerdown', (e) => {
+                if (!gameStarted || !gameActive || !activeArrow || activeArrow.isFlying || remainingArrows <= 0) return;
+                const pt = getPointerPos(e);
+                const dist = Math.hypot(pt.x - bowPos.x, pt.y - bowPos.y);
+                if (dist < 180 || !activeArrow.isFlying) {
+                    isAiming = true;
+                    aimCurrent = pt;
+                }
+            });
+
+            canvas.addEventListener('pointermove', (e) => {
+                if (!isAiming || !activeArrow) return;
+                const pt = getPointerPos(e);
+                const maxPull = 140;
+                const dx = pt.x - bowPos.x;
+                const dy = pt.y - bowPos.y;
+                const dist = Math.hypot(dx, dy);
+
+                if (dist > maxPull) {
+                    aimCurrent = {
+                        x: bowPos.x + (dx / dist) * maxPull,
+                        y: bowPos.y + (dy / dist) * maxPull
+                    };
+                } else {
+                    aimCurrent = pt;
+                }
+            });
+
+            canvas.addEventListener('pointerup', () => {
+                if (!isAiming || !activeArrow) return;
+                isAiming = false;
+
+                const pullX = bowPos.x - aimCurrent.x;
+                const pullY = bowPos.y - aimCurrent.y;
+                const pullDist = Math.hypot(pullX, pullY);
+
+                if (pullDist > 15 && remainingArrows > 0) {
+                    const angle = Math.atan2(pullY, pullX);
+                    const speed = pullDist * 0.22;
+
+                    activeArrow.x = bowPos.x;
+                    activeArrow.y = bowPos.y;
+                    activeArrow.vx = Math.cos(angle) * speed;
+                    activeArrow.vy = Math.sin(angle) * speed;
+                    activeArrow.angle = angle;
+                    activeArrow.isFlying = true;
+
+                    flyingArrows.push(activeArrow);
+                    activeArrow = null;
+
+                    remainingArrows--;
+                    arrowsVal.textContent = remainingArrows;
+
+                    setTimeout(() => {
+                        if (gameActive && !activeArrow && remainingArrows > 0) {
+                            resetArrow();
+                        }
+                    }, 250);
+                } else {
+                    aimCurrent = { ...bowPos };
+                }
+            });
+
+            function triggerTNTExplosion(x, y) {
+                treatPopup = {
+                    active: true,
+                    startX: canvas.width / 2,
+                    currentY: canvas.height + 40,
+                    targetY: canvas.height / 2,
+                    alpha: 0,
+                    life: 30
+                };
+
+                const availableTargets = targets.filter(t => !t.isFalling);
+                availableTargets.sort((a, b) => {
+                    const distA = Math.hypot((a.x + a.w/2) - x, (a.y + a.h/2) - y);
+                    const distB = Math.hypot((b.x + b.w/2) - x, (b.y + b.h/2) - y);
+                    return distA - distB;
+                });
+
+                let destroyedCount = 0;
+                const maxBlast = 2 + Math.floor(Math.random() * 2);
+
+                for (let t of availableTargets) {
+                    const cx = t.x + t.w / 2;
+                    const cy = t.y + t.h / 2;
+                    if (Math.hypot(cx - x, cy - y) > 5) {
+                        if (destroyedCount < maxBlast) {
+                            t.isFalling = true;
+                            t.vx = (Math.random() - 0.5) * 8;
+                            t.vy = -4 - Math.random() * 3;
+                            score += 1;
+                            scoreVal.textContent = score;
+                            destroyedCount++;
+                        }
+                    }
+                }
+
+                for (let i = 0; i < 20; i++) {
+                    particles.push({
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 10,
+                        vy: (Math.random() - 0.5) * 10,
+                        color: Math.random() > 0.5 ? '#ef4444' : '#f59e0b',
+                        life: 30
+                    });
+                }
+            }
+
+            function update() {
+                if (!gameStarted) return;
+
+                if (treatPopup.active) {
+                    treatPopup.currentY += (treatPopup.targetY - treatPopup.currentY) * 0.15;
+                    treatPopup.life--;
+                    if (treatPopup.life > 20) {
+                        treatPopup.alpha = (30 - treatPopup.life) / 10;
+                    } else if (treatPopup.life < 10) {
+                        treatPopup.alpha = treatPopup.life / 10;
+                    } else {
+                        treatPopup.alpha = 1;
+                    }
+                    if (treatPopup.life <= 0) {
+                        treatPopup.active = false;
+                    }
+                }
+
+                if (currentLevel >= 4) {
+                    const time = Date.now() * 0.003;
+                    targets.forEach(t => {
+                        if (!t.isFalling) {
+                            t.y = t.baseY + Math.sin(time + t.swayOffset) * 18;
+                        }
+                    });
+                }
+
+                for (let i = flyingArrows.length - 1; i >= 0; i--) {
+                    let arrow = flyingArrows[i];
+                    arrow.x += arrow.vx;
+                    arrow.y += arrow.vy;
+                    arrow.vy += 0.22; 
+                    arrow.angle = Math.atan2(arrow.vy, arrow.vx);
+
+                    if (arrow.y > canvas.height + 50 || arrow.x > canvas.width + 50 || arrow.x < -50 || arrow.y < -200) {
+                        flyingArrows.splice(i, 1);
+                        checkGameOverCondition();
+                        continue;
+                    }
+
+                    let hitTarget = false;
+                    for (let j = targets.length - 1; j >= 0; j--) {
+                        let t = targets[j];
+                        if (!t.isFalling && 
+                            arrow.x >= t.x && arrow.x <= t.x + t.w &&
+                            arrow.y >= t.y && arrow.y <= t.y + t.h) {
+                            
+                            t.isFalling = true;
+                            t.vx = arrow.vx * 0.3 + (Math.random() - 0.5) * 4;
+                            t.vy = -3 - Math.random() * 3;
+
+                            score += 1;
+                            scoreVal.textContent = score;
+
+                            if (t.type === 'tnt') {
+                                playSound('tnt');
+                                triggerTNTExplosion(t.x + t.w/2, t.y + t.h/2);
+                            } else {
+                                playSound('hit');
+                            }
+
+                            for (let p = 0; p < 12; p++) {
+                                particles.push({
+                                    x: t.x + t.w / 2,
+                                    y: t.y + t.h / 2,
+                                    vx: (Math.random() - 0.5) * 8,
+                                    vy: (Math.random() - 0.5) * 8,
+                                    color: t.type === 'tnt' ? '#ef4444' : '#d97706',
+                                    life: 25
+                                });
+                            }
+
+                            flyingArrows.splice(i, 1);
+                            hitTarget = true;
+                            checkWinCondition();
+                            break;
+                        }
+                    }
+                    if (hitTarget) {
+                        checkGameOverCondition();
+                        continue;
+                    }
+                }
+
+                for (let j = targets.length - 1; j >= 0; j--) {
+                    let t = targets[j];
+                    if (t.isFalling) {
+                        t.x += t.vx;
+                        t.y += t.vy;
+                        t.vy += 0.5; 
+                        t.alpha -= 0.025;
+
+                        if (t.y > canvas.height + 40 || t.alpha <= 0) {
+                            targets.splice(j, 1);
+                            checkWinCondition();
+                            checkGameOverCondition();
+                        }
+                    }
+                }
+
+                for (let p = particles.length - 1; p >= 0; p--) {
+                    let part = particles[p];
+                    part.x += part.vx;
+                    part.y += part.vy;
+                    part.life--;
+                    if (part.life <= 0) {
+                        particles.splice(p, 1);
+                    }
+                }
+            }
+
+            function checkWinCondition() {
+                if (!gameActive) return;
+                const remainingActive = targets.filter(t => !t.isFalling).length;
+                if (remainingActive === 0) {
+                    gameActive = false;
+                    playSound('win');
+                    modalOverlay.classList.remove('hidden');
+                    modalIcon.textContent = '🏆';
+                    modalTitle.textContent = `Wave ${currentLevel} Cleared!`;
+                    modalDesc.textContent = `All target crates eliminated! Score: ${score}`;
+                    modalBtn.textContent = 'Next Wave';
+                }
+            }
+
+            function checkGameOverCondition() {
+                if (!gameActive) return;
+                const remainingActive = targets.filter(t => !t.isFalling).length;
+                if (remainingArrows <= 0 && flyingArrows.length === 0 && remainingActive > 0) {
+                    gameActive = false;
+                    playSound('lose');
+                    modalOverlay.classList.remove('hidden');
+                    modalIcon.textContent = '💥';
+                    modalTitle.textContent = `Out of Arrows!`;
+                    modalDesc.textContent = `Remaining targets survived. Match lost! Score: ${score}`;
+                    modalBtn.textContent = 'Try Again';
+                }
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < canvas.width; x += 60) {
+                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+                }
+                for (let y = 0; y < canvas.height; y += 60) {
+                    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+                }
+
+                drawClassicBow();
+
+                if (isAiming) {
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(245, 158, 11, 0.85)';
+                    ctx.setLineDash([6, 6]);
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+
+                    const pullX = bowPos.x - aimCurrent.x;
+                    const pullY = bowPos.y - aimCurrent.y;
+                    const speed = Math.hypot(pullX, pullY) * 0.22;
+                    const angle = Math.atan2(pullY, pullX);
+
+                    let simX = bowPos.x;
+                    let simY = bowPos.y;
+                    let simVx = Math.cos(angle) * speed;
+                    let simVy = Math.sin(angle) * speed;
+
+                    ctx.moveTo(simX, simY);
+                    for (let step = 0; step < 35; step++) {
+                        simVy += 0.22;
+                        simX += simVx;
+                        simY += simVy;
+                        ctx.lineTo(simX, simY);
+                    }
+                    ctx.stroke();
+                    ctx.restore();
+
+                    drawArrow(bowPos.x, bowPos.y, Math.atan2(bowPos.y - aimCurrent.y, bowPos.x - aimCurrent.x));
+                } else if (activeArrow && !activeArrow.isFlying && remainingArrows > 0 && gameStarted) {
+                    drawArrow(bowPos.x, bowPos.y, 0);
+                }
+
+                flyingArrows.forEach(arrow => {
+                    drawArrow(arrow.x, arrow.y, arrow.angle);
+                });
+
+                targets.forEach(t => {
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(0, t.alpha);
+                    drawCrate(t.x, t.y, t.w, t.type);
+                    ctx.restore();
+                });
+
+                particles.forEach(part => {
+                    ctx.save();
+                    ctx.fillStyle = part.color;
+                    ctx.fillRect(part.x, part.y, 5, 5);
+                    ctx.restore();
+                });
+
+                if (treatPopup.active) {
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(0, treatPopup.alpha);
+                    ctx.font = '900 40px Inter, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    ctx.shadowColor = '#f59e0b';
+                    ctx.shadowBlur = 30;
+                    ctx.fillStyle = '#fef08a';
+                    ctx.fillText('Great Treat!', treatPopup.startX, treatPopup.currentY);
+                    
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText('Great Treat!', treatPopup.startX, treatPopup.currentY);
+                    ctx.restore();
+                }
+            }
+
+            function drawClassicBow() {
+                ctx.save();
+                ctx.translate(bowPos.x, bowPos.y);
+
+                ctx.strokeStyle = '#92400e';
+                ctx.lineWidth = 8;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.arc(0, 0, 70, -Math.PI * 0.48, Math.PI * 0.48, false);
+                ctx.stroke();
+
+                ctx.strokeStyle = '#78350f';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(0, 0, 70, -Math.PI * 0.45, Math.PI * 0.45, false);
+                ctx.stroke();
+
+                ctx.fillStyle = '#b45309';
+                ctx.fillRect(-7, -16, 12, 32);
+                ctx.strokeStyle = '#451a03';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(-7, -16, 12, 32);
+
+                ctx.beginPath();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#f8fafc';
+                
+                const topTip = { x: Math.cos(-Math.PI * 0.48) * 70, y: Math.sin(-Math.PI * 0.48) * 70 };
+                const botTip = { x: Math.cos(Math.PI * 0.48) * 70, y: Math.sin(Math.PI * 0.48) * 70 };
+                const nockPos = isAiming ? { x: aimCurrent.x - bowPos.x, y: aimCurrent.y - bowPos.y } : { x: -32, y: 0 };
+
+                ctx.moveTo(topTip.x, topTip.y);
+                ctx.lineTo(nockPos.x, nockPos.y);
+                ctx.lineTo(botTip.x, botTip.y);
+                ctx.stroke();
+
+                ctx.restore();
+            }
+
+            function drawCrate(x, y, size, type) {
+                ctx.save();
+                ctx.translate(x, y);
+
+                if (type === 'tnt') {
+                    ctx.fillStyle = '#b91c1c';
+                    ctx.fillRect(0, 0, size, size);
+                    ctx.fillStyle = '#dc2626';
+                    ctx.fillRect(3, 3, size - 6, size - 6);
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, size * 0.35, size, size * 0.3);
+
+                    ctx.fillStyle = '#b91c1c';
+                    ctx.font = `bold ${Math.max(9, size * 0.25)}px Inter`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('TNT', size / 2, size / 2);
+
+                    ctx.strokeStyle = '#7f1d1d';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(0, 0, size, size);
+                } else {
+                    ctx.fillStyle = '#92400e';
+                    ctx.fillRect(0, 0, size, size);
+                    ctx.fillStyle = '#b45309';
+                    ctx.fillRect(3, 3, size - 6, size - 6);
+
+                    ctx.strokeStyle = '#78350f';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0); ctx.lineTo(size, size);
+                    ctx.moveTo(size, 0); ctx.lineTo(0, size);
+                    ctx.stroke();
+
+                    ctx.strokeStyle = '#78350f';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(0, 0, size, size);
+                }
+
+                ctx.restore();
+            }
+
+            function drawArrow(x, y, angle) {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(angle);
+
+                ctx.strokeStyle = '#78350f';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(-40, 0);
+                ctx.lineTo(22, 0);
+                ctx.stroke();
+
+                ctx.fillStyle = '#94a3b8';
+                ctx.beginPath();
+                ctx.moveTo(30, 0);
+                ctx.lineTo(18, -5);
+                ctx.lineTo(18, 5);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = '#e2e8f0';
+                ctx.beginPath();
+                ctx.moveTo(-40, 0);
+                ctx.lineTo(-30, -8);
+                ctx.lineTo(-26, 0);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = '#f59e0b';
+                ctx.beginPath();
+                ctx.moveTo(-40, 0);
+                ctx.lineTo(-30, 8);
+                ctx.lineTo(-26, 0);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            modalBtn.addEventListener('click', () => {
+                modalOverlay.classList.add('hidden');
+                if (modalTitle.textContent.includes('Cleared')) {
+                    currentLevel++;
+                } else if (modalTitle.textContent.includes('Session')) {
+                    return;
+                } else {
+                    currentLevel = 1;
+                    score = 0;
+                    scoreVal.textContent = score;
+                }
+                gameActive = true;
+                flyingArrows = [];
+                spawnTargets();
+                resetArrow();
+            });
+
+            resetBtn.addEventListener('click', () => {
+                modalOverlay.classList.add('hidden');
+                currentLevel = 1;
+                score = 0;
+                scoreVal.textContent = score;
+                gameActive = true;
+                flyingArrows = [];
+                spawnTargets();
+                resetArrow();
+            });
+
+            function loop() {
+                update();
+                draw();
+                requestAnimationFrame(loop);
+            }
+
+            loop();
+        });
+    </script>
+</body>
+</html>
 <body class="w-screen h-screen flex flex-col justify-between select-none overflow-hidden bg-slate-950 text-white m-0 p-0 relative">
 
     <div id="mainMenu" class="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center transition-all duration-300 p-4">
